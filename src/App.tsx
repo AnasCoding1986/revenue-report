@@ -44,6 +44,7 @@ const App: React.FC = () => {
     const savedMode = localStorage.getItem("darkMode");
     return savedMode ? JSON.parse(savedMode) : false;
   });
+  const [chartKey, setChartKey] = useState(0); // For forcing chart re-render
 
   const lastMonthIndex = months.indexOf("January");
   const januaryIndex = months.indexOf("January");
@@ -51,7 +52,9 @@ const App: React.FC = () => {
   // Detect mobile view and apply theme
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const newIsMobile = window.innerWidth < 768;
+      setIsMobile(newIsMobile);
+      setChartKey((prev) => prev + 1); // Force chart re-render on resize
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -130,10 +133,13 @@ const App: React.FC = () => {
       },
       datalabels: { display: false },
     },
+    layout: {
+      padding: { top: 40 }, // Add padding to accommodate growth indicator at the top
+    },
     scales: {
       y: {
         title: {
-          display: true,
+          display: !isMobile,
           text: "Collection (CR)",
           color: isDarkMode ? "#fff" : "#000",
         },
@@ -146,7 +152,7 @@ const App: React.FC = () => {
               _ticks: Tick[]
             ): string => {
               const crValue = Number(value) / 1e7;
-              return Number(crValue.toFixed(2)) + " CR";
+              return `${Number(crValue.toFixed(2))}\nCR`;
             },
           }),
         },
@@ -166,6 +172,7 @@ const App: React.FC = () => {
         },
       },
     },
+    maintainAspectRatio: !isMobile,
   };
 
   const barChartOptions = {
@@ -216,6 +223,7 @@ const App: React.FC = () => {
         },
       },
     },
+    maintainAspectRatio: !isMobile,
   };
 
   const growthAllTeams = getGrowth(
@@ -272,10 +280,10 @@ const App: React.FC = () => {
         },
       },
       datalabels: {
-        display: !isMobile, // Show only on desktop
-        color: "#000", // Black text
+        display: !isMobile,
+        color: "#000",
         textAlign: "center" as const,
-        font: { size: 10, weight: "bold" as const }, // Smaller, bold font
+        font: { size: 10, weight: "bold" as const },
         formatter: (value: number, context: any) => {
           const total = context.dataset.data.reduce(
             (sum: number, val: number) => sum + val,
@@ -287,6 +295,7 @@ const App: React.FC = () => {
         },
       },
     },
+    maintainAspectRatio: !isMobile,
   };
 
   // Team-specific Chart Data
@@ -368,9 +377,9 @@ const App: React.FC = () => {
             </button>
             <button
               onClick={toggleDarkMode}
-              className="px-2 py-1 md:px-4 md:py-2 rounded transition text-sm md:text-base bg-gray-700 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-500"
+              className="px-2 py-1 md:px-4 md:py-2 rounded transition text-white bg-gray-700 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-500 text-sm md:text-base"
             >
-              {isDarkMode ? "Light Mode" : "Dark Mode"}
+              {isDarkMode ? "☀" : "☾"}
             </button>
           </div>
         </div>
@@ -378,6 +387,13 @@ const App: React.FC = () => {
 
       {/* Main Content */}
       <main className="container mx-auto p-4 md:p-6 flex-grow">
+        <h1
+          className={`text-2xl md:text-3xl font-semibold text-center mb-4 ${
+            isDarkMode ? "text-white" : "text-black"
+          }`}
+        >
+          Taxes zone- Sylhet TDS report
+        </h1>
         {viewMode === "raw" ? (
           <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md overflow-x-auto text-black dark:text-white">
             <h2 className="text-lg md:text-2xl font-semibold mb-4 text-center">
@@ -439,18 +455,26 @@ const App: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="overflow-x-auto md:overflow-x-hidden">
+          <div className="overflow-x-hidden">
             <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 text-black dark:text-white">
               <h2 className="text-lg md:text-2xl font-semibold mb-4">
                 All Teams Collection (CR)
               </h2>
-              <div className="relative w-full min-w-[600px] md:min-w-0">
+              <div className="relative w-full">
                 {viewMode === "month" ? (
-                  <Bar data={allTeamsChartData} options={barChartOptions} />
+                  <Bar
+                    key={`bar-${chartKey}`}
+                    data={allTeamsChartData}
+                    options={barChartOptions}
+                  />
                 ) : (
-                  <Line data={allTeamsChartData} options={lineChartOptions} />
+                  <Line
+                    key={`line-${chartKey}`}
+                    data={allTeamsChartData}
+                    options={lineChartOptions}
+                  />
                 )}
-                <div className="absolute bottom-2 md:bottom-4 right-2 md:right-4 bg-gray-800 dark:bg-gray-700 text-white p-1 md:p-2 rounded text-xs md:text-base">
+                <div className="absolute top-2 md:top-4 right-2 md:right-4 bg-gray-800 dark:bg-gray-700 text-white p-1 md:p-2 rounded text-xs md:text-base">
                   Growth: {growthAllTeams}%
                 </div>
               </div>
@@ -461,16 +485,24 @@ const App: React.FC = () => {
                 <h2 className="text-base md:text-xl font-semibold mb-4">
                   Team Contribution 2024-25 (%)
                 </h2>
-                <div className="w-full min-w-[300px] md:min-w-0">
-                  <Pie data={pieChartData2024} options={pieChartOptions} />
+                <div className="w-full">
+                  <Pie
+                    key={`pie1-${chartKey}`}
+                    data={pieChartData2024}
+                    options={pieChartOptions}
+                  />
                 </div>
               </div>
               <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md text-black dark:text-white">
                 <h2 className="text-base md:text-xl font-semibold mb-4">
                   Team Contribution 2023-24 (%)
                 </h2>
-                <div className="w-full min-w-[300px] md:min-w-0">
-                  <Pie data={pieChartData2023} options={pieChartOptions} />
+                <div className="w-full">
+                  <Pie
+                    key={`pie2-${chartKey}`}
+                    data={pieChartData2023}
+                    options={pieChartOptions}
+                  />
                 </div>
               </div>
             </div>
@@ -483,13 +515,21 @@ const App: React.FC = () => {
                 <h2 className="text-base md:text-xl font-semibold mb-4">
                   {team} Collection (CR)
                 </h2>
-                <div className="relative w-full min-w-[600px] md:min-w-0">
+                <div className="relative w-full">
                   {viewMode === "month" ? (
-                    <Bar data={chartData} options={barChartOptions} />
+                    <Bar
+                      key={`bar-${team}-${chartKey}`}
+                      data={chartData}
+                      options={barChartOptions}
+                    />
                   ) : (
-                    <Line data={chartData} options={lineChartOptions} />
+                    <Line
+                      key={`line-${team}-${chartKey}`}
+                      data={chartData}
+                      options={lineChartOptions}
+                    />
                   )}
-                  <div className="absolute bottom-2 md:bottom-4 right-2 md:right-4 bg-gray-800 dark:bg-gray-700 text-white p-1 md:p-2 rounded text-xs md:text-base">
+                  <div className="absolute top-2 md:top-4 right-2 md:right-4 bg-gray-800 dark:bg-gray-700 text-white p-1 md:p-2 rounded text-xs md:text-base">
                     Growth: {growth}%
                   </div>
                 </div>
