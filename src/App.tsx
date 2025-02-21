@@ -134,7 +134,7 @@ const App: React.FC = () => {
       datalabels: { display: false },
     },
     layout: {
-      padding: { top: 40 }, // Add padding to accommodate growth indicator at the top
+      padding: { top: 40 }, // Space for growth indicator
     },
     scales: {
       y: {
@@ -145,6 +145,7 @@ const App: React.FC = () => {
         },
         ticks: {
           color: isDarkMode ? "#fff" : "#000",
+          maxTicksLimit: isMobile ? 10 : undefined, // More ticks on mobile for clarity
           ...(isMobile && {
             callback: (
               value: number | string,
@@ -369,7 +370,7 @@ const App: React.FC = () => {
               onClick={() => setViewMode("month")}
               className={`px-2 py-1 md:px-4 md:py-2 rounded transition text-sm md:text-base ${
                 viewMode === "month"
-                  ? "bg-blue-800 dark:bg-gray-700"
+                  ? "bg-blue-8s00 dark:bg-gray-700"
                   : "bg-blue-700 dark:bg-gray-600 hover:bg-blue-600 dark:hover:bg-gray-500"
               }`}
             >
@@ -460,7 +461,10 @@ const App: React.FC = () => {
               <h2 className="text-lg md:text-2xl font-semibold mb-4">
                 All Teams Collection (CR)
               </h2>
-              <div className="relative w-full">
+              <div
+                className="relative w-full"
+                style={{ height: isMobile ? "300px" : undefined }}
+              >
                 {viewMode === "month" ? (
                   <Bar
                     key={`bar-${chartKey}`}
@@ -515,7 +519,10 @@ const App: React.FC = () => {
                 <h2 className="text-base md:text-xl font-semibold mb-4">
                   {team} Collection (CR)
                 </h2>
-                <div className="relative w-full">
+                <div
+                  className="relative w-full"
+                  style={{ height: isMobile ? "300px" : undefined }}
+                >
                   {viewMode === "month" ? (
                     <Bar
                       key={`bar-${team}-${chartKey}`}
