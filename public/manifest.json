@@ -1,0 +1,9 @@
+{
+  "short_name": "Revenue Report",
+  "name": "Revenue Report 2024-25",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
