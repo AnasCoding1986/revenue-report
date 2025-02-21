@@ -150,7 +150,21 @@ const App: React.FC = () => {
       datalabels: { display: false },
     },
     scales: {
-      y: { title: { display: true, text: "Collection (CR)" } },
+      y: {
+        title: { display: true, text: "Collection (CR)" },
+        ticks: isMobile
+          ? {
+              callback: (
+                value: number | string,
+                _index: number,
+                _ticks: Tick[]
+              ): string => {
+                const crValue = Number(value) / 1e7; // Convert to crores
+                return Number(crValue.toFixed(2)) + " CR"; // Two significant digits
+              },
+            }
+          : undefined,
+      },
       x: { title: { display: true, text: "Month" } },
     },
   };
@@ -192,7 +206,7 @@ const App: React.FC = () => {
   const pieChartData2024 = getPieChartData("2024-2025");
   const pieChartData2023 = getPieChartData("2023-2024");
 
-  // Pie Chart Options (team name and percentage inside, collection on hover)
+  // Pie Chart Options (team name and percentage inside for desktop, hover only for mobile)
   const pieChartOptions = {
     plugins: {
       legend: { position: "right" as const },
@@ -206,10 +220,10 @@ const App: React.FC = () => {
         },
       },
       datalabels: {
-        display: true,
-        color: "#fff",
+        display: !isMobile, // Show only on desktop
+        color: "#000", // Black text
         textAlign: "center" as const,
-        font: { size: 12, weight: "bold" as const },
+        font: { size: 10, weight: "bold" as const }, // Smaller font size, bold
         formatter: (value: number, context: any) => {
           const total = context.dataset.data.reduce(
             (sum: number, val: number) => sum + val,
@@ -262,7 +276,9 @@ const App: React.FC = () => {
       {/* Navbar */}
       <nav className="bg-blue-900 text-white p-4 shadow-md">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
-          <h1 className="text-xl md:text-2xl font-bold">TDS Report 2024-25</h1>
+          <h1 className="text-xl md:text-2xl font-bold">
+            Revenue Report 2024-25
+          </h1>
           <div className="space-x-2 md:space-x-4 mt-2 md:mt-0">
             <button
               onClick={() => setViewMode("raw")}
@@ -422,7 +438,7 @@ const App: React.FC = () => {
       <footer className="bg-blue-900 text-white p-4">
         <div className="container mx-auto text-center">
           <p className="text-sm md:text-base">
-            © 2025 TDS Report | Designed with React, Tailwind CSS, and
+            © 2025 Revenue Report | Designed with React, Tailwind CSS, and
             TypeScript
           </p>
         </div>
