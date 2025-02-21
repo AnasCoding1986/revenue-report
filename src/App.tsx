@@ -262,9 +262,7 @@ const App: React.FC = () => {
       {/* Navbar */}
       <nav className="bg-blue-900 text-white p-4 shadow-md">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
-          <h1 className="text-xl md:text-2xl font-bold">
-            Revenue Report 2024-25
-          </h1>
+          <h1 className="text-xl md:text-2xl font-bold">TDS Report 2024-25</h1>
           <div className="space-x-2 md:space-x-4 mt-2 md:mt-0">
             <button
               onClick={() => setViewMode("raw")}
@@ -424,7 +422,7 @@ const App: React.FC = () => {
       <footer className="bg-blue-900 text-white p-4">
         <div className="container mx-auto text-center">
           <p className="text-sm md:text-base">
-            © 2025 Revenue Report | Designed with React, Tailwind CSS, and
+            © 2025 TDS Report | Designed with React, Tailwind CSS, and
             TypeScript
           </p>
         </div>
