@@ -40,29 +40,42 @@ ChartJS.register(
 const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<"raw" | "upto" | "month">("upto");
   const [isMobile, setIsMobile] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const savedMode = localStorage.getItem("darkMode");
+    return savedMode ? JSON.parse(savedMode) : false;
+  });
 
   const lastMonthIndex = months.indexOf("January");
   const januaryIndex = months.indexOf("January");
 
-  // Detect mobile view
+  // Detect mobile view and apply theme
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768); // Tailwind's md breakpoint
+      setIsMobile(window.innerWidth < 768);
     };
-    handleResize(); // Initial check
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem("darkMode", JSON.stringify(isDarkMode));
+    document.documentElement.classList.toggle("dark", isDarkMode);
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev: boolean) => !prev);
+  };
+
   // Get chart data based on view mode
   const getChartData = (data: number[]) => {
     if (viewMode === "month") {
-      return [data[januaryIndex]]; // Only January data
+      return [data[januaryIndex]];
     }
     const cumulative = getCumulativeData(data);
     return viewMode === "upto"
       ? cumulative.slice(0, januaryIndex + 1)
-      : cumulative; // Cumulative up to January
+      : cumulative;
   };
 
   // Calculate growth based on view mode
@@ -119,21 +132,39 @@ const App: React.FC = () => {
     },
     scales: {
       y: {
-        title: { display: true, text: "Collection (CR)" },
-        ticks: isMobile
-          ? {
-              callback: (
-                value: number | string,
-                _index: number,
-                _ticks: Tick[]
-              ): string => {
-                const crValue = Number(value) / 1e7; // Convert to crores
-                return Number(crValue.toFixed(2)) + " CR"; // Two significant digits
-              },
-            }
-          : undefined,
+        title: {
+          display: true,
+          text: "Collection (CR)",
+          color: isDarkMode ? "#fff" : "#000",
+        },
+        ticks: {
+          color: isDarkMode ? "#fff" : "#000",
+          ...(isMobile && {
+            callback: (
+              value: number | string,
+              _index: number,
+              _ticks: Tick[]
+            ): string => {
+              const crValue = Number(value) / 1e7;
+              return Number(crValue.toFixed(2)) + " CR";
+            },
+          }),
+        },
+        grid: {
+          color: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+        },
       },
-      x: { title: { display: true, text: "Months" } },
+      x: {
+        title: {
+          display: true,
+          text: "Months",
+          color: isDarkMode ? "#fff" : "#000",
+        },
+        ticks: { color: isDarkMode ? "#fff" : "#000" },
+        grid: {
+          color: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+        },
+      },
     },
   };
 
@@ -151,21 +182,39 @@ const App: React.FC = () => {
     },
     scales: {
       y: {
-        title: { display: true, text: "Collection (CR)" },
-        ticks: isMobile
-          ? {
-              callback: (
-                value: number | string,
-                _index: number,
-                _ticks: Tick[]
-              ): string => {
-                const crValue = Number(value) / 1e7; // Convert to crores
-                return Number(crValue.toFixed(2)) + " CR"; // Two significant digits
-              },
-            }
-          : undefined,
+        title: {
+          display: true,
+          text: "Collection (CR)",
+          color: isDarkMode ? "#fff" : "#000",
+        },
+        ticks: {
+          color: isDarkMode ? "#fff" : "#000",
+          ...(isMobile && {
+            callback: (
+              value: number | string,
+              _index: number,
+              _ticks: Tick[]
+            ): string => {
+              const crValue = Number(value) / 1e7;
+              return Number(crValue.toFixed(2)) + " CR";
+            },
+          }),
+        },
+        grid: {
+          color: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+        },
       },
-      x: { title: { display: true, text: "Month" } },
+      x: {
+        title: {
+          display: true,
+          text: "Month",
+          color: isDarkMode ? "#fff" : "#000",
+        },
+        ticks: { color: isDarkMode ? "#fff" : "#000" },
+        grid: {
+          color: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+        },
+      },
     },
   };
 
@@ -206,10 +255,13 @@ const App: React.FC = () => {
   const pieChartData2024 = getPieChartData("2024-2025");
   const pieChartData2023 = getPieChartData("2023-2024");
 
-  // Pie Chart Options (team name and percentage inside for desktop, hover only for mobile)
+  // Pie Chart Options
   const pieChartOptions = {
     plugins: {
-      legend: { position: "right" as const },
+      legend: {
+        position: "right" as const,
+        labels: { color: isDarkMode ? "#fff" : "#000" },
+      },
       tooltip: {
         enabled: true,
         callbacks: {
@@ -223,7 +275,7 @@ const App: React.FC = () => {
         display: !isMobile, // Show only on desktop
         color: "#000", // Black text
         textAlign: "center" as const,
-        font: { size: 10, weight: "bold" as const }, // Smaller font size, bold
+        font: { size: 10, weight: "bold" as const }, // Smaller, bold font
         formatter: (value: number, context: any) => {
           const total = context.dataset.data.reduce(
             (sum: number, val: number) => sum + val,
@@ -272,18 +324,24 @@ const App: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100 font-sans">
+    <div
+      className={`min-h-screen flex flex-col ${
+        isDarkMode ? "dark bg-gray-900" : "bg-gray-100"
+      } font-sans`}
+    >
       {/* Navbar */}
-      <nav className="bg-blue-900 text-white p-4 shadow-md">
+      <nav className="bg-blue-900 dark:bg-gray-800 text-white p-4 shadow-md">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
-          <h1 className="text-xl md:text-2xl font-bold">TDS Report 2024-25</h1>
-          <div className="space-x-2 md:space-x-4 mt-2 md:mt-0">
+          <h1 className="text-xl md:text-2xl font-bold">
+            Revenue Report 2024-25
+          </h1>
+          <div className="flex space-x-2 md:space-x-4 mt-2 md:mt-0 items-center">
             <button
               onClick={() => setViewMode("raw")}
               className={`px-2 py-1 md:px-4 md:py-2 rounded transition text-sm md:text-base ${
                 viewMode === "raw"
-                  ? "bg-blue-800"
-                  : "bg-blue-700 hover:bg-blue-600"
+                  ? "bg-blue-800 dark:bg-gray-700"
+                  : "bg-blue-700 dark:bg-gray-600 hover:bg-blue-600 dark:hover:bg-gray-500"
               }`}
             >
               Raw Data
@@ -292,8 +350,8 @@ const App: React.FC = () => {
               onClick={() => setViewMode("upto")}
               className={`px-2 py-1 md:px-4 md:py-2 rounded transition text-sm md:text-base ${
                 viewMode === "upto"
-                  ? "bg-blue-800"
-                  : "bg-blue-700 hover:bg-blue-600"
+                  ? "bg-blue-800 dark:bg-gray-700"
+                  : "bg-blue-700 dark:bg-gray-600 hover:bg-blue-600 dark:hover:bg-gray-500"
               }`}
             >
               Upto January
@@ -302,11 +360,17 @@ const App: React.FC = () => {
               onClick={() => setViewMode("month")}
               className={`px-2 py-1 md:px-4 md:py-2 rounded transition text-sm md:text-base ${
                 viewMode === "month"
-                  ? "bg-blue-800"
-                  : "bg-blue-700 hover:bg-blue-600"
+                  ? "bg-blue-800 dark:bg-gray-700"
+                  : "bg-blue-700 dark:bg-gray-600 hover:bg-blue-600 dark:hover:bg-gray-500"
               }`}
             >
               January
+            </button>
+            <button
+              onClick={toggleDarkMode}
+              className="px-2 py-1 md:px-4 md:py-2 rounded transition text-sm md:text-base bg-gray-700 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-500"
+            >
+              {isDarkMode ? "Light Mode" : "Dark Mode"}
             </button>
           </div>
         </div>
@@ -315,7 +379,7 @@ const App: React.FC = () => {
       {/* Main Content */}
       <main className="container mx-auto p-4 md:p-6 flex-grow">
         {viewMode === "raw" ? (
-          <div className="bg-white p-4 md:p-6 rounded-lg shadow-md overflow-x-auto">
+          <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md overflow-x-auto text-black dark:text-white">
             <h2 className="text-lg md:text-2xl font-semibold mb-4 text-center">
               {rawData.title}
             </h2>
@@ -326,7 +390,7 @@ const App: React.FC = () => {
                 </h3>
                 <table className="w-full text-xs md:text-sm border-collapse">
                   <thead>
-                    <tr className="bg-blue-100">
+                    <tr className="bg-blue-100 dark:bg-gray-700">
                       <th className="border p-1 md:p-2">ক্রম</th>
                       <th className="border p-1 md:p-2">
                         উৎস কর কর্তনকারী কর্তৃপক্ষ
@@ -345,7 +409,10 @@ const App: React.FC = () => {
                   </thead>
                   <tbody>
                     {team.authorities.map((auth, i) => (
-                      <tr key={i} className="hover:bg-gray-50">
+                      <tr
+                        key={i}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
                         <td className="border p-1 md:p-2 text-center">
                           {i + 1}
                         </td>
@@ -373,7 +440,7 @@ const App: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto md:overflow-x-hidden">
-            <div className="bg-white p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6">
+            <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 text-black dark:text-white">
               <h2 className="text-lg md:text-2xl font-semibold mb-4">
                 All Teams Collection (CR)
               </h2>
@@ -383,14 +450,14 @@ const App: React.FC = () => {
                 ) : (
                   <Line data={allTeamsChartData} options={lineChartOptions} />
                 )}
-                <div className="absolute bottom-2 md:bottom-4 right-2 md:right-4 bg-gray-800 text-white p-1 md:p-2 rounded text-xs md:text-base">
+                <div className="absolute bottom-2 md:bottom-4 right-2 md:right-4 bg-gray-800 dark:bg-gray-700 text-white p-1 md:p-2 rounded text-xs md:text-base">
                   Growth: {growthAllTeams}%
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-              <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
+              <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md text-black dark:text-white">
                 <h2 className="text-base md:text-xl font-semibold mb-4">
                   Team Contribution 2024-25 (%)
                 </h2>
@@ -398,7 +465,7 @@ const App: React.FC = () => {
                   <Pie data={pieChartData2024} options={pieChartOptions} />
                 </div>
               </div>
-              <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
+              <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md text-black dark:text-white">
                 <h2 className="text-base md:text-xl font-semibold mb-4">
                   Team Contribution 2023-24 (%)
                 </h2>
@@ -411,7 +478,7 @@ const App: React.FC = () => {
             {teamCharts.map(({ team, chartData, growth }) => (
               <div
                 key={team}
-                className="bg-white p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6"
+                className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md mb-4 md:mb-6 text-black dark:text-white"
               >
                 <h2 className="text-base md:text-xl font-semibold mb-4">
                   {team} Collection (CR)
@@ -422,7 +489,7 @@ const App: React.FC = () => {
                   ) : (
                     <Line data={chartData} options={lineChartOptions} />
                   )}
-                  <div className="absolute bottom-2 md:bottom-4 right-2 md:right-4 bg-gray-800 text-white p-1 md:p-2 rounded text-xs md:text-base">
+                  <div className="absolute bottom-2 md:bottom-4 right-2 md:right-4 bg-gray-800 dark:bg-gray-700 text-white p-1 md:p-2 rounded text-xs md:text-base">
                     Growth: {growth}%
                   </div>
                 </div>
@@ -433,10 +500,10 @@ const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-blue-900 text-white p-4">
+      <footer className="bg-blue-900 dark:bg-gray-800 text-white p-4">
         <div className="container mx-auto text-center">
           <p className="text-sm md:text-base">
-            © 2025 TDS Report | Designed with React, Tailwind CSS, and
+            © 2025 Revenue Report | Designed with React, Tailwind CSS, and
             TypeScript
           </p>
         </div>
